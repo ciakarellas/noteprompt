@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'features/notes/screens/notes_list_screen.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() {
@@ -21,11 +22,7 @@ class MainApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const Scaffold(
-        body: Center(
-          child: Text('Markdown Notes App - Phase 1 Complete!'),
-        ),
-      ),
+      home: const NotesListScreen(),
     );
   }
 }
