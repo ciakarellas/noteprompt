@@ -10,10 +10,34 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # State Management
+  flutter_riverpod: ^2.5.1
+
+  # Database
+  sqflite: ^2.3.2
+  path: ^1.8.3
+
+  # Markdown
+  flutter_markdown: ^0.6.18
+  markdown: ^7.1.1
+
+  # UI Components
+  flutter_markdown_editor: ^0.1.6
+
+  # Platform Integration
+  url_launcher: ^6.2.2
+
+  # Utilities
+  intl: ^0.18.1
+  uuid: ^4.2.2
+  shared_preferences: ^2.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.7
 
 flutter:
   uses-material-design: true
