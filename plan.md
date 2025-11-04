@@ -275,17 +275,17 @@ final shortcutsProvider = Provider<ShortcutsService>((ref) {
 **Goal:** Build the home screen showing all notes
 
 #### Tasks:
-- [ ] Create `NotesListScreen` widget
-- [ ] Implement `NoteCard` widget to display:
+- [x] Create `NotesListScreen` widget
+- [x] Implement `NoteCard` widget to display:
   - Title (first line)
   - Content preview (first 2-3 lines)
   - Last modified date (formatted)
-- [ ] Connect to `notesListProvider` using Riverpod
-- [ ] Handle loading, error, and empty states
-- [ ] Add FloatingActionButton for "Create New Note"
-- [ ] Implement navigation to editor screen
-- [ ] Add swipe-to-delete functionality (dismissible)
-- [ ] Sort notes by `updatedAt` (most recent first)
+- [x] Connect to `notesListProvider` using Riverpod
+- [x] Handle loading, error, and empty states
+- [x] Add FloatingActionButton for "Create New Note"
+- [x] Implement navigation to editor screen
+- [x] Add swipe-to-delete functionality (dismissible)
+- [x] Sort notes by `updatedAt` (most recent first)
 
 #### UI Components:
 ```dart
