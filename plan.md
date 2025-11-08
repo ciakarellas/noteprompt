@@ -317,18 +317,18 @@ class NotesListScreen extends ConsumerWidget {
 **Goal:** Create a dual-mode markdown editor
 
 #### Tasks:
-- [ ] Create `NoteEditorScreen` with AppBar actions
-- [ ] Implement `MarkdownEditor` widget with:
+- [x] Create `NoteEditorScreen` with AppBar actions
+- [x] Implement `MarkdownEditor` widget with:
   - `TextField` for markdown view (raw text)
   - `Markdown` widget for formatted view (read-only initially)
   - `TextEditingController` management
-- [ ] Create `ViewModeToggle` button (Icon: eye/code)
-- [ ] Implement view switching logic:
+- [x] Create `ViewModeToggle` button (Icon: eye/code)
+- [x] Implement view switching logic:
   - Preserve cursor position when possible
   - Smooth transition between views
-- [ ] Add auto-save functionality (debounced after 2 seconds of inactivity)
-- [ ] Implement manual save button in AppBar
-- [ ] Handle back navigation with unsaved changes warning
+- [x] Add auto-save functionality (debounced after 2 seconds of inactivity)
+- [x] Implement manual save button in AppBar
+- [x] Handle back navigation with unsaved changes warning
 
 #### View Mode Logic:
 ```dart
