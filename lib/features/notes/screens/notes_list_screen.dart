@@ -4,6 +4,7 @@ import '../../../shared/widgets/empty_state.dart';
 import '../models/note_model.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/note_card.dart';
+import 'note_editor_screen.dart';
 
 /// Home screen displaying the list of all notes
 class NotesListScreen extends ConsumerWidget {
@@ -78,11 +79,9 @@ class NotesListScreen extends ConsumerWidget {
 
   /// Navigate to the editor screen for an existing note
   void _navigateToEditor(BuildContext context, String noteId) {
-    // TODO: Implement navigation to editor screen in Phase 4
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening note: $noteId'),
-        duration: const Duration(seconds: 1),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => NoteEditorScreen(noteId: noteId),
       ),
     );
   }
@@ -95,11 +94,9 @@ class NotesListScreen extends ConsumerWidget {
       await repository.insertNote(newNote);
 
       if (context.mounted) {
-        // TODO: Navigate to editor screen with new note ID in Phase 4
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('New note created!'),
-            duration: Duration(seconds: 1),
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => NoteEditorScreen(noteId: newNote.id),
           ),
         );
       }
