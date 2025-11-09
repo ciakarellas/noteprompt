@@ -5,6 +5,7 @@ import '../models/note_model.dart';
 import '../providers/editor_provider.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/markdown_editor.dart';
+import '../widgets/markdown_toolbar.dart';
 import '../widgets/view_mode_toggle.dart';
 
 /// Note Editor Screen
@@ -280,12 +281,24 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             ),
           ],
         ),
-        body: SafeArea(
-          child: MarkdownEditor(
-            controller: _controller,
-            focusNode: _focusNode,
-            onChanged: _onTextChanged,
-          ),
+        body: Column(
+          children: [
+            Expanded(
+              child: SafeArea(
+                bottom: false,
+                child: MarkdownEditor(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  onChanged: _onTextChanged,
+                ),
+              ),
+            ),
+            MarkdownToolbar(
+              controller: _controller,
+              focusNode: _focusNode,
+              onFormatApplied: _onTextChanged,
+            ),
+          ],
         ),
       ),
     );

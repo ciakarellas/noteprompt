@@ -358,30 +358,32 @@ Widget build() {
 
 ---
 
-### Phase 5: Formatting Toolbar (Days 10-12)
+### Phase 5: Formatting Toolbar (Days 10-12) ✅
 
 **Goal:** Add markdown formatting helpers for non-technical users
 
 #### Tasks:
-- [ ] Create `MarkdownToolbar` widget with buttons:
+- [x] Create `MarkdownToolbar` widget with buttons:
   - Bold (`**text**`)
   - Italic (`*text*`)
+  - Strikethrough (`~~text~~`)
   - Headers (H1, H2, H3)
   - Unordered list (`- item`)
   - Ordered list (`1. item`)
   - Link (`[text](url)`)
   - Code block (` ``` `)
-- [ ] Implement text selection wrapping logic:
+  - Inline code (`` `code` ``)
+  - Blockquote (`> quote`)
+  - Horizontal rule (`---`)
+- [x] Implement text selection wrapping logic:
   - Get current selection from TextEditingController
   - Wrap selected text with markdown syntax
   - Update cursor position after insertion
-- [ ] Show/hide toolbar based on view mode:
+- [x] Show/hide toolbar based on view mode:
   - Always visible in formatted view
-  - Hidden or minimal in markdown view
-- [ ] Add link dialog for URL input
-- [ ] Implement keyboard shortcuts (optional):
-  - Cmd/Ctrl + B for bold
-  - Cmd/Ctrl + I for italic
+  - Hidden in markdown view
+- [x] Add link dialog for URL input
+- [x] Write comprehensive tests for toolbar functionality
 
 #### Toolbar Button Logic:
 ```dart
