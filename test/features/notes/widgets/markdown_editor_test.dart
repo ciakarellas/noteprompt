@@ -341,5 +341,314 @@ void main() {
 
       expect(controller.text.length, greaterThan(1000));
     });
+
+    testWidgets('should render all header levels (H1-H6)', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const headers = '''
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+##### Heading 5
+###### Heading 6
+''';
+      controller.text = headers;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      // Verify content is set
+      expect(controller.text, equals(headers));
+    });
+
+    testWidgets('should render bold, italic, and strikethrough text', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+This is **bold** text.
+This is *italic* text.
+This is ~~strikethrough~~ text.
+This is ***bold and italic*** text.
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should render unordered and ordered lists', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+Unordered list:
+- Item 1
+- Item 2
+- Item 3
+
+Ordered list:
+1. First item
+2. Second item
+3. Third item
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should render inline code and code blocks', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+Inline code: `var x = 10;`
+
+Code block:
+```
+function hello() {
+  console.log("Hello World");
+}
+```
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should render links', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+Check out [Flutter](https://flutter.dev) for more info.
+
+Visit [Google](https://google.com).
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should render blockquotes', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+> This is a blockquote.
+> It can span multiple lines.
+
+Regular text here.
+
+> Another blockquote.
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should render horizontal rules', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+Section 1
+
+---
+
+Section 2
+
+---
+
+Section 3
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should render images', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+Here's an image:
+
+![Alt text](https://example.com/image.png)
+
+Another image: ![Logo](https://flutter.dev/logo.png)
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should render complex markdown with mixed elements', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+# Main Title
+
+This is a paragraph with **bold**, *italic*, and ~~strikethrough~~ text.
+
+## Features List
+
+- Feature 1 with `inline code`
+- Feature 2 with [link](https://example.com)
+- Feature 3 with **bold text**
+
+### Code Example
+
+```dart
+void main() {
+  print("Hello World");
+}
+```
+
+> Important note: This is a blockquote with **bold** text.
+
+---
+
+## Ordered Steps
+
+1. First step
+2. Second step with `code`
+3. Third step
+
+Final paragraph with [documentation link](https://docs.flutter.dev).
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should handle nested lists', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+- Parent item 1
+  - Child item 1.1
+  - Child item 1.2
+- Parent item 2
+  - Child item 2.1
+    - Grandchild item 2.1.1
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should handle mixed list types', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+1. Ordered item 1
+2. Ordered item 2
+   - Unordered sub-item 2.1
+   - Unordered sub-item 2.2
+3. Ordered item 3
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should handle code blocks with language specifier', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+```dart
+void main() {
+  print("Hello");
+}
+```
+
+```javascript
+console.log("Hello");
+```
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should handle multiple blockquotes', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+> First quote
+> with multiple lines
+
+Regular text
+
+> Second quote
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
+
+    testWidgets('should handle empty lines and spacing', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const content = '''
+Paragraph 1
+
+
+Paragraph 2 with extra spacing
+
+
+Paragraph 3
+''';
+      controller.text = content;
+
+      await tester.pumpWidget(createTestWidget(container: container));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(content));
+    });
   });
 }

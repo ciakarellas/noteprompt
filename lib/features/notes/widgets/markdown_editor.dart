@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/editor_provider.dart';
 
 /// Custom markdown editor widget
@@ -95,10 +96,7 @@ class MarkdownEditor extends ConsumerWidget {
             selectable: false,
             padding: const EdgeInsets.all(16),
             styleSheet: _buildMarkdownStyleSheet(context),
-            onTapLink: (text, url, title) {
-              // Handle link taps in the future (Phase 6)
-              debugPrint('Link tapped: $url');
-            },
+            onTapLink: (text, url, title) => _handleLinkTap(context, url),
           ),
         ),
         // Invisible TextField overlay for editing
@@ -190,6 +188,55 @@ class MarkdownEditor extends ConsumerWidget {
       em: const TextStyle(fontStyle: FontStyle.italic),
       strong: const TextStyle(fontWeight: FontWeight.bold),
       del: const TextStyle(decoration: TextDecoration.lineThrough),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant,
+            width: 2,
+          ),
+        ),
+      ),
+      img: textTheme.bodyLarge?.copyWith(
+        color: colorScheme.primary,
+      ),
+    );
+  }
+
+  /// Handle link taps - open URLs in browser
+  Future<void> _handleLinkTap(BuildContext context, String? url) async {
+    if (url == null || url.isEmpty) {
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+
+      // Check if URL can be launched
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        if (context.mounted) {
+          _showError(context, 'Could not open link: $url');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        _showError(context, 'Error opening link: $e');
+      }
+    }
+  }
+
+  /// Show error message
+  void _showError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 }
