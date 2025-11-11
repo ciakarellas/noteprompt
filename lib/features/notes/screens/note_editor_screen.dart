@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/note_model.dart';
 import '../providers/editor_provider.dart';
@@ -7,6 +9,7 @@ import '../providers/notes_provider.dart';
 import '../widgets/markdown_editor.dart';
 import '../widgets/markdown_toolbar.dart';
 import '../widgets/view_mode_toggle.dart';
+import '../../shortcuts/providers/shortcuts_provider.dart';
 
 /// Note Editor Screen
 /// Provides a dual-mode markdown editor with auto-save functionality
@@ -209,6 +212,51 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     );
   }
 
+  /// Send note content to Claude via iOS Shortcuts
+  Future<void> _sendToClaude() async {
+    if (_currentNote == null) return;
+
+    try {
+      final shortcutsService = ref.read(shortcutsServiceProvider);
+      final content = _controller.text;
+
+      // Check if content is empty
+      if (content.trim().isEmpty) {
+        _showError('Cannot send empty note');
+        return;
+      }
+
+      // Send to Claude
+      final success = await shortcutsService.sendToClaude(content);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sent to Claude'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        String errorMessage = 'Failed to send to Claude';
+
+        if (e.code == 'SHORTCUT_NOT_FOUND') {
+          errorMessage =
+              'Shortcut "SendToClaude" not found. Please create it in the Shortcuts app.';
+        } else if (e.code == 'UNSUPPORTED_PLATFORM') {
+          errorMessage = 'This feature is only available on iOS';
+        }
+
+        _showError(errorMessage);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Error sending to Claude: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final editorState = ref.watch(editorStateProvider);
@@ -274,6 +322,13 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           ),
           actions: [
             const ViewModeToggle(),
+            // Send to Claude button (iOS only)
+            if (Platform.isIOS)
+              IconButton(
+                icon: const Icon(Icons.send),
+                tooltip: 'Send to Claude',
+                onPressed: _sendToClaude,
+              ),
             IconButton(
               icon: const Icon(Icons.save),
               tooltip: 'Save note',
