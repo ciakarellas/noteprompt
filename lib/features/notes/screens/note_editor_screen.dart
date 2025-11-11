@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/note_model.dart';
 import '../providers/editor_provider.dart';
@@ -7,6 +8,7 @@ import '../providers/notes_provider.dart';
 import '../widgets/markdown_editor.dart';
 import '../widgets/markdown_toolbar.dart';
 import '../widgets/view_mode_toggle.dart';
+import '../../shortcuts/providers/share_provider.dart';
 
 /// Note Editor Screen
 /// Provides a dual-mode markdown editor with auto-save functionality
@@ -209,6 +211,47 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     );
   }
 
+  /// Handle sharing the note
+  Future<void> _shareNote() async {
+    if (_currentNote == null) return;
+
+    final shareService = ref.read(shareServiceProvider);
+
+    try {
+      final success = await shareService.shareNote(
+        content: _controller.text,
+        title: _currentNote?.title,
+      );
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(shareService.isSharingSupported
+                ? 'Note shared successfully'
+                : 'Note copied to clipboard'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        String errorMessage = 'Failed to share note';
+
+        if (e.code == 'SHORTCUT_NOT_AVAILABLE') {
+          errorMessage = 'Shortcuts app not available. Please create a "SendToClaude" shortcut in the Shortcuts app.';
+        } else if (e.message != null) {
+          errorMessage = e.message!;
+        }
+
+        _showError(errorMessage);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Failed to share note: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final editorState = ref.watch(editorStateProvider);
@@ -274,6 +317,11 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           ),
           actions: [
             const ViewModeToggle(),
+            IconButton(
+              icon: const Icon(Icons.share),
+              tooltip: ref.read(shareServiceProvider).shareButtonLabel,
+              onPressed: _shareNote,
+            ),
             IconButton(
               icon: const Icon(Icons.save),
               tooltip: 'Save note',

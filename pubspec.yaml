@@ -24,6 +24,7 @@ dependencies:
 
   # Platform Integration
   url_launcher: ^6.2.2
+  share_plus: ^10.1.4
 
   # Utilities
   intl: ^0.18.1
