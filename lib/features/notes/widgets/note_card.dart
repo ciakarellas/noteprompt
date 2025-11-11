@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../models/note_model.dart';
 
@@ -43,6 +44,7 @@ class NoteCard extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onTap,
+          onLongPress: () => _copyNoteToClipboard(context),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -145,5 +147,37 @@ class NoteCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Copy note content to clipboard on long press
+  Future<void> _copyNoteToClipboard(BuildContext context) async {
+    try {
+      // Copy the full note content (title + content) to clipboard
+      final fullContent = '${note.title}\n\n${note.content}';
+      await Clipboard.setData(ClipboardData(text: fullContent));
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Note "${note.title}" copied to clipboard'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error message if copy fails
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to copy note: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }

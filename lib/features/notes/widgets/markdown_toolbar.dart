@@ -424,34 +424,34 @@ class _ToolbarButton extends StatelessWidget {
       // Button with icon and label (for headers)
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(8),
-            child: Tooltip(
-              message: tooltip,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 18,
+        child: GestureDetector(
+          onTap: onPressed,
+          behavior: HitTestBehavior.opaque,
+          child: Tooltip(
+            message: tooltip,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    label!,
+                    style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      label!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

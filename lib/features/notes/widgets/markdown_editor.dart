@@ -108,7 +108,7 @@ class MarkdownEditor extends ConsumerWidget {
             expands: true,
             textAlignVertical: TextAlignVertical.top,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.transparent,
+              color: theme.colorScheme.onSurface,
               height: 1.5,
             ),
             decoration: const InputDecoration(
