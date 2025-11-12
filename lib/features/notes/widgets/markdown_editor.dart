@@ -66,79 +66,35 @@ class MarkdownEditor extends ConsumerWidget {
     );
   }
 
-  /// Build formatted view (rendered markdown)
-  /// Shows rendered markdown with editing via toolbar or tap to switch to raw mode
+  /// Build formatted view (editable with user-friendly styling)
+  /// Shows editable TextField with friendly font and formatting
   Widget _buildFormattedView(BuildContext context, ThemeData theme) {
-    final isEmpty = controller.text.isEmpty;
-
-    // Always use the same widget structure to prevent focus loss
+    // Always show an editable TextField in formatted view
+    // Use user-friendly font (not monospace) for better readability
     return Container(
       color: theme.colorScheme.surface,
-      child: Stack(
-        children: [
-          // Conditionally show either the empty state TextField or rendered markdown
-          if (isEmpty)
-            // Empty state: show editable TextField with hint
-            CallbackShortcuts(
-              bindings: {
-                const SingleActivator(LogicalKeyboardKey.enter): () =>
-                    _handleEnterKey(),
-              },
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                maxLines: null,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
-                style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
-                decoration: InputDecoration(
-                  hintText: 'Start typing your note...',
-                  hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-                onChanged: (_) => onChanged?.call(),
-              ),
-            )
-          else
-            // Has content: show rendered markdown
-            GestureDetector(
-              onLongPress: () => _copyMarkdownToClipboard(context),
-              child: Markdown(
-                data: controller.text,
-                selectable: true,
-                padding: const EdgeInsets.all(16),
-                styleSheet: _buildMarkdownStyleSheet(context),
-                onTapLink: (text, url, title) => _handleLinkTap(context, url),
-              ),
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.enter): () =>
+              _handleEnterKey(),
+        },
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          maxLines: null,
+          expands: true,
+          textAlignVertical: TextAlignVertical.top,
+          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+          decoration: InputDecoration(
+            hintText: 'Start typing your note...',
+            hintStyle: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.4),
             ),
-
-          // When not empty, keep a hidden TextField for toolbar editing
-          // This maintains focus and allows toolbar operations
-          if (!isEmpty)
-            Positioned(
-              left: -10000,
-              top: -10000,
-              child: SizedBox(
-                width: 100,
-                height: 100,
-                child: CallbackShortcuts(
-                  bindings: {
-                    const SingleActivator(LogicalKeyboardKey.enter): () =>
-                        _handleEnterKey(),
-                  },
-                  child: TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    maxLines: null,
-                    onChanged: (_) => onChanged?.call(),
-                  ),
-                ),
-              ),
-            ),
-        ],
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.all(16),
+          ),
+          onChanged: (_) => onChanged?.call(),
+        ),
       ),
     );
   }
