@@ -230,29 +230,75 @@ class MarkdownToolbar extends ConsumerWidget {
     final beforeCursor = text.substring(0, selection.start);
     final lineStart = beforeCursor.lastIndexOf('\n') + 1;
 
-    // Check if the line already has the prefix
-    final currentLine = text.substring(lineStart);
-    final bool hasPrefix = currentLine.startsWith(prefix);
+    // Get the current line text
+    final lineEndIndex = text.indexOf('\n', lineStart);
+    final lineEnd = lineEndIndex == -1 ? text.length : lineEndIndex;
+    final currentLine = text.substring(lineStart, lineEnd);
+
+    // Check if this is a header prefix
+    final isHeaderPrefix = prefix.startsWith('#');
 
     String newText;
     TextSelection newSelection;
+    int removedLength = 0;
 
-    if (hasPrefix) {
-      // Remove the prefix
-      final afterPrefix = text.substring(lineStart + prefix.length);
-      final beforeLine = text.substring(0, lineStart);
-      newText = '$beforeLine$afterPrefix';
-      newSelection = TextSelection.collapsed(
-        offset: selection.start - prefix.length,
-      );
+    if (isHeaderPrefix) {
+      // For headers, remove any existing header markers (any number of #)
+      final headerMatch = RegExp(r'^(#{1,6})\s*').firstMatch(currentLine);
+
+      if (headerMatch != null) {
+        final existingPrefix = headerMatch.group(0)!;
+        removedLength = existingPrefix.length;
+
+        // If it's the same prefix, toggle it off (remove it)
+        if (existingPrefix == prefix) {
+          final lineWithoutPrefix = currentLine.substring(removedLength);
+          final beforeLine = text.substring(0, lineStart);
+          final afterLine = text.substring(lineEnd);
+          newText = '$beforeLine$lineWithoutPrefix$afterLine';
+          newSelection = TextSelection.collapsed(
+            offset: selection.start - removedLength,
+          );
+        } else {
+          // Replace with new prefix
+          final lineWithoutPrefix = currentLine.substring(removedLength);
+          final beforeLine = text.substring(0, lineStart);
+          final afterLine = text.substring(lineEnd);
+          newText = '$beforeLine$prefix$lineWithoutPrefix$afterLine';
+          newSelection = TextSelection.collapsed(
+            offset: selection.start - removedLength + prefix.length,
+          );
+        }
+      } else {
+        // No existing header, add the prefix
+        final beforeLine = text.substring(0, lineStart);
+        final afterLine = text.substring(lineStart);
+        newText = '$beforeLine$prefix$afterLine';
+        newSelection = TextSelection.collapsed(
+          offset: selection.start + prefix.length,
+        );
+      }
     } else {
-      // Add the prefix
-      final beforeLine = text.substring(0, lineStart);
-      final afterLine = text.substring(lineStart);
-      newText = '$beforeLine$prefix$afterLine';
-      newSelection = TextSelection.collapsed(
-        offset: selection.start + prefix.length,
-      );
+      // For non-header formats (lists, blockquotes), use original toggle logic
+      final bool hasPrefix = currentLine.startsWith(prefix);
+
+      if (hasPrefix) {
+        // Remove the prefix
+        final afterPrefix = text.substring(lineStart + prefix.length);
+        final beforeLine = text.substring(0, lineStart);
+        newText = '$beforeLine$afterPrefix';
+        newSelection = TextSelection.collapsed(
+          offset: selection.start - prefix.length,
+        );
+      } else {
+        // Add the prefix
+        final beforeLine = text.substring(0, lineStart);
+        final afterLine = text.substring(lineStart);
+        newText = '$beforeLine$prefix$afterLine';
+        newSelection = TextSelection.collapsed(
+          offset: selection.start + prefix.length,
+        );
+      }
     }
 
     // Update controller
