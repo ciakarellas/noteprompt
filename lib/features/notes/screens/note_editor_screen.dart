@@ -158,6 +158,11 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       // Mark as saved
       ref.read(editorStateProvider.notifier).markAsSaved();
 
+      // Hide keyboard after saving (only when user explicitly clicks Save)
+      if (showSnackbar) {
+        _focusNode.unfocus();
+      }
+
       if (showSnackbar && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

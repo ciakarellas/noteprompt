@@ -19,15 +19,9 @@ class MarkdownToolbar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final editorState = ref.watch(editorStateProvider);
     final theme = Theme.of(context);
 
-    // Show toolbar only in formatted view
-    // In markdown view, users can type the syntax directly
-    if (editorState.isMarkdownView) {
-      return const SizedBox.shrink();
-    }
-
+    // Always show toolbar - users can format text in both views
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
