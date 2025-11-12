@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -57,10 +58,9 @@ class MarkdownEditor extends ConsumerWidget {
   }
 
   /// Build formatted view (rendered markdown)
-  /// Note: This is currently read-only. For full editing in formatted view,
-  /// we would need a more complex rich text editor implementation.
+  /// Shows rendered markdown with editing via toolbar or tap to switch to raw mode
   Widget _buildFormattedView(BuildContext context, ThemeData theme) {
-    // If content is empty, show the raw text field with a hint
+    // If content is empty, show the editable text field with a hint
     if (controller.text.isEmpty) {
       return Container(
         color: theme.colorScheme.surface,
@@ -84,38 +84,38 @@ class MarkdownEditor extends ConsumerWidget {
       );
     }
 
-    // For formatted view with content, we'll use a combination approach:
-    // Show markdown rendering with an overlay TextField for editing
+    // For formatted view with content: show rendered markdown only
+    // TextField is hidden but active for toolbar editing
     return Stack(
       children: [
-        // Rendered markdown (visible)
-        Container(
-          color: theme.colorScheme.surface,
-          child: Markdown(
-            data: controller.text,
-            selectable: false,
-            padding: const EdgeInsets.all(16),
-            styleSheet: _buildMarkdownStyleSheet(context),
-            onTapLink: (text, url, title) => _handleLinkTap(context, url),
+        // Rendered markdown (visible) with long-press to copy raw markdown
+        GestureDetector(
+          onLongPress: () => _copyMarkdownToClipboard(context),
+          child: Container(
+            color: theme.colorScheme.surface,
+            child: Markdown(
+              data: controller.text,
+              selectable: true,
+              padding: const EdgeInsets.all(16),
+              styleSheet: _buildMarkdownStyleSheet(context),
+              onTapLink: (text, url, title) => _handleLinkTap(context, url),
+            ),
           ),
         ),
-        // Invisible TextField overlay for editing
-        Positioned.fill(
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            maxLines: null,
-            expands: true,
-            textAlignVertical: TextAlignVertical.top,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-              height: 1.5,
+        // Hidden TextField for toolbar editing
+        // Positioned offscreen but still functional
+        Positioned(
+          left: -10000,
+          top: -10000,
+          child: SizedBox(
+            width: 100,
+            height: 100,
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              maxLines: null,
+              onChanged: (_) => onChanged?.call(),
             ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
-            ),
-            onChanged: (_) => onChanged?.call(),
           ),
         ),
       ],
@@ -200,6 +200,26 @@ class MarkdownEditor extends ConsumerWidget {
         color: colorScheme.primary,
       ),
     );
+  }
+
+  /// Copy raw markdown content to clipboard
+  Future<void> _copyMarkdownToClipboard(BuildContext context) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: controller.text));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Markdown copied to clipboard'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        _showError(context, 'Failed to copy: $e');
+      }
+    }
   }
 
   /// Handle link taps - open URLs in browser
