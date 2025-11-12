@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/editor_provider.dart';
 
+// Track the last known cursor position for detecting double Enter
+int _lastEnterPosition = -1;
+
 /// Custom markdown editor widget
 /// Supports dual-view mode: formatted view and raw markdown view
 class MarkdownEditor extends ConsumerWidget {
@@ -33,26 +36,32 @@ class MarkdownEditor extends ConsumerWidget {
   Widget _buildMarkdownView(BuildContext context, ThemeData theme) {
     return Container(
       color: theme.colorScheme.surface,
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        maxLines: null,
-        expands: true,
-        textAlignVertical: TextAlignVertical.top,
-        style: theme.textTheme.bodyLarge?.copyWith(
-          fontFamily: 'monospace',
-          height: 1.5,
-        ),
-        decoration: InputDecoration(
-          hintText: 'Type your markdown here...',
-          hintStyle: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.4),
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.enter): () =>
+              _handleEnterKey(),
+        },
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          maxLines: null,
+          expands: true,
+          textAlignVertical: TextAlignVertical.top,
+          style: theme.textTheme.bodyLarge?.copyWith(
             fontFamily: 'monospace',
+            height: 1.5,
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
+          decoration: InputDecoration(
+            hintText: 'Type your markdown here...',
+            hintStyle: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              fontFamily: 'monospace',
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.all(16),
+          ),
+          onChanged: (_) => onChanged?.call(),
         ),
-        onChanged: (_) => onChanged?.call(),
       ),
     );
   }
@@ -60,66 +69,179 @@ class MarkdownEditor extends ConsumerWidget {
   /// Build formatted view (rendered markdown)
   /// Shows rendered markdown with editing via toolbar or tap to switch to raw mode
   Widget _buildFormattedView(BuildContext context, ThemeData theme) {
-    // If content is empty, show the editable text field with a hint
-    if (controller.text.isEmpty) {
-      return Container(
-        color: theme.colorScheme.surface,
-        child: TextField(
-          controller: controller,
-          focusNode: focusNode,
-          maxLines: null,
-          expands: true,
-          textAlignVertical: TextAlignVertical.top,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
-          decoration: InputDecoration(
-            hintText: 'Start typing your note...',
-            hintStyle: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
+    final isEmpty = controller.text.isEmpty;
+
+    // Always use the same widget structure to prevent focus loss
+    return Container(
+      color: theme.colorScheme.surface,
+      child: Stack(
+        children: [
+          // Conditionally show either the empty state TextField or rendered markdown
+          if (isEmpty)
+            // Empty state: show editable TextField with hint
+            CallbackShortcuts(
+              bindings: {
+                const SingleActivator(LogicalKeyboardKey.enter): () =>
+                    _handleEnterKey(),
+              },
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                decoration: InputDecoration(
+                  hintText: 'Start typing your note...',
+                  hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                onChanged: (_) => onChanged?.call(),
+              ),
+            )
+          else
+            // Has content: show rendered markdown
+            GestureDetector(
+              onLongPress: () => _copyMarkdownToClipboard(context),
+              child: Markdown(
+                data: controller.text,
+                selectable: true,
+                padding: const EdgeInsets.all(16),
+                styleSheet: _buildMarkdownStyleSheet(context),
+                onTapLink: (text, url, title) => _handleLinkTap(context, url),
+              ),
             ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.all(16),
-          ),
-          onChanged: (_) => onChanged?.call(),
-        ),
-      );
+
+          // When not empty, keep a hidden TextField for toolbar editing
+          // This maintains focus and allows toolbar operations
+          if (!isEmpty)
+            Positioned(
+              left: -10000,
+              top: -10000,
+              child: SizedBox(
+                width: 100,
+                height: 100,
+                child: CallbackShortcuts(
+                  bindings: {
+                    const SingleActivator(LogicalKeyboardKey.enter): () =>
+                        _handleEnterKey(),
+                  },
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    maxLines: null,
+                    onChanged: (_) => onChanged?.call(),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Handle Enter key press for list continuation
+  void _handleEnterKey() {
+    final text = controller.text;
+    final selection = controller.selection;
+
+    if (!selection.isValid || selection.start != selection.end) {
+      // If there's a selection or invalid cursor, insert normal newline
+      _insertNewline();
+      return;
     }
 
-    // For formatted view with content: show rendered markdown only
-    // TextField is hidden but active for toolbar editing
-    return Stack(
-      children: [
-        // Rendered markdown (visible) with long-press to copy raw markdown
-        GestureDetector(
-          onLongPress: () => _copyMarkdownToClipboard(context),
-          child: Container(
-            color: theme.colorScheme.surface,
-            child: Markdown(
-              data: controller.text,
-              selectable: true,
-              padding: const EdgeInsets.all(16),
-              styleSheet: _buildMarkdownStyleSheet(context),
-              onTapLink: (text, url, title) => _handleLinkTap(context, url),
-            ),
-          ),
-        ),
-        // Hidden TextField for toolbar editing
-        // Positioned offscreen but still functional
-        Positioned(
-          left: -10000,
-          top: -10000,
-          child: SizedBox(
-            width: 100,
-            height: 100,
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              maxLines: null,
-              onChanged: (_) => onChanged?.call(),
-            ),
-          ),
-        ),
-      ],
+    final cursorPosition = selection.start;
+
+    // Find the current line
+    final beforeCursor = text.substring(0, cursorPosition);
+    final lineStart = beforeCursor.lastIndexOf('\n') + 1;
+    final lineEndIndex = text.indexOf('\n', cursorPosition);
+    final lineEnd = lineEndIndex == -1 ? text.length : lineEndIndex;
+    final currentLine = text.substring(lineStart, lineEnd);
+    final lineContent = text.substring(lineStart, cursorPosition);
+
+    // Check for unordered list (bullet points)
+    final bulletMatch = RegExp(r'^(\s*)-\s').firstMatch(currentLine);
+    if (bulletMatch != null) {
+      final indent = bulletMatch.group(1) ?? '';
+      final prefix = '$indent- ';
+
+      // Check if this is an empty list item (just the marker)
+      if (currentLine.trim() == '-') {
+        // Double enter - remove the bullet and exit list mode
+        _removeCurrentLineMarkerAndExitList(lineStart, lineEnd, prefix.length);
+      } else {
+        // Continue the list
+        _insertNewline(prefix: prefix);
+      }
+      return;
+    }
+
+    // Check for ordered list (numbered)
+    final numberedMatch = RegExp(r'^(\s*)(\d+)\.\s').firstMatch(currentLine);
+    if (numberedMatch != null) {
+      final indent = numberedMatch.group(1) ?? '';
+      final currentNumber = int.parse(numberedMatch.group(2)!);
+      final nextNumber = currentNumber + 1;
+      final prefix = '$indent$nextNumber. ';
+
+      // Check if this is an empty list item (just the number)
+      final numberPattern = RegExp(r'^\s*\d+\.\s*$');
+      if (numberPattern.hasMatch(currentLine)) {
+        // Double enter - remove the number and exit list mode
+        final markerLength = numberedMatch.group(0)!.length;
+        _removeCurrentLineMarkerAndExitList(lineStart, lineEnd, markerLength);
+      } else {
+        // Continue the list with next number
+        _insertNewline(prefix: prefix);
+      }
+      return;
+    }
+
+    // No list detected, insert normal newline
+    _insertNewline();
+  }
+
+  /// Insert a newline with optional prefix
+  void _insertNewline({String prefix = ''}) {
+    final text = controller.text;
+    final selection = controller.selection;
+    final cursorPosition = selection.start;
+
+    final beforeCursor = text.substring(0, cursorPosition);
+    final afterCursor = text.substring(cursorPosition);
+    final newText = '$beforeCursor\n$prefix$afterCursor';
+    final newCursorPosition = cursorPosition + 1 + prefix.length;
+
+    controller.value = controller.value.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newCursorPosition),
     );
+
+    onChanged?.call();
+  }
+
+  /// Remove the marker from the current line and exit list mode
+  void _removeCurrentLineMarkerAndExitList(
+      int lineStart, int lineEnd, int markerLength) {
+    final text = controller.text;
+    final beforeLine = text.substring(0, lineStart);
+    final afterLine = text.substring(lineEnd);
+
+    // Remove the current line entirely and add just a newline
+    final newText = '$beforeLine\n$afterLine';
+    final newCursorPosition = lineStart + 1;
+
+    controller.value = controller.value.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newCursorPosition),
+    );
+
+    onChanged?.call();
   }
 
   /// Build custom markdown style sheet

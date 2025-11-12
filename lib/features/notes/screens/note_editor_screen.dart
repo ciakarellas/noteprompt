@@ -36,6 +36,10 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     super.initState();
     _controller = TextEditingController();
     _focusNode = FocusNode();
+
+    // Add listener to maintain focus when text changes
+    _controller.addListener(_maintainFocusOnTextChange);
+
     _loadNote();
 
     // Set current note ID in editor state
@@ -44,9 +48,22 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     });
   }
 
+  /// Maintain focus when text changes from empty to non-empty
+  void _maintainFocusOnTextChange() {
+    // If the user is typing and loses focus, restore it
+    if (_controller.text.isNotEmpty && !_focusNode.hasFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _focusNode.canRequestFocus) {
+          _focusNode.requestFocus();
+        }
+      });
+    }
+  }
+
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _controller.removeListener(_maintainFocusOnTextChange);
     _controller.dispose();
     _focusNode.dispose();
 
@@ -68,6 +85,14 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           _controller.text = note.content;
           _lastSavedContent = note.content;
           _isLoading = false;
+        });
+
+        // Auto-focus the editor to show keyboard
+        // Especially important for new empty notes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _focusNode.canRequestFocus) {
+            _focusNode.requestFocus();
+          }
         });
       } else {
         if (mounted) {
